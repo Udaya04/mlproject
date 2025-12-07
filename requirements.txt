@@ -3,5 +3,7 @@ numpy
 pandas
 scikit-learn
 seaborn
+catboost
+xgboost
 
--e .
+#-e .  #jab bhi jo kuch bhi install krna usko commentout krke install krna//

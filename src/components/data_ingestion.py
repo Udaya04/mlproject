@@ -3,46 +3,64 @@ import sys
 from src.exception import CustomException
 from src.logger import logging
 import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
 from dataclasses import dataclass
+from src.components.data_transformation import DataTransformation
+from src.components.data_transformation import DataTransformationConfig
 
 @dataclass
 class DataingestionConfig:
-    train_data_path: str=os.path.join('artifacts','train.csv')
-    test_data_path: str=os.path.join('artifacts','test.csv')
-    raw_data_path: str=os.path.join('artifacts','data.csv')
+    train_data_path: str = os.path.join('artifacts', 'train.csv')
+    test_data_path: str = os.path.join('artifacts', 'test.csv')
+    raw_data_path: str = os.path.join('artifacts', 'data.csv')
 
 
-###class- To read the dataset from different different database
 class DataIngestion:
     def __init__(self):
-        ## Self_ingestion_config contain three values(train_data_path,test_data_path,raw_data_path)
-        self.ingestion_config=DataingestionConfig()
-    def initiate_data_ingestion(self):
-        logging.info("Entered the data ingestion method or component")
-        try:
-            df=pd.read_csv('notebook\StudentsPerformance.csv')
-            logging.info('Read the Datasets as Dataframe')
+        self.ingestion_config = DataingestionConfig()
 
-            ## Create the folder
-            os.makedirs(os.path.dirname(self.ingestion_config.train_data_path),exist_ok=True)
-            df.to_csv(self.ingestion_config.raw_data_path,index=False,header=True)
-            logging.info('Train_test_spilt initiated')
-            train_set,test_set=train_test_split(df,test_size=0.2,random_state=42)
-            train_set.to_csv(self.ingestion_config.train_data_path,index=False,header=True)
-            test_set.to_csv(self.ingestion_config.test_data_path,index=False,header=True)
-            logging.info('Ingestion of the data is completed')
+    def initiate_data_ingestion(self):
+        logging.info("Entered the data ingestion method/component")
+        try:
+            df = pd.read_csv(os.path.join('notebook', 'StudentsPerformance.csv'))
+            logging.info('Read the dataset as DataFrame')
+
+            #  ADD AVERAGE_SCORE COLUMN HERE 
+            df['Average_Score'] = df[['math score', 'reading score', 'writing score']].mean(axis=1)
+            logging.info('Average_Score column created successfully')
+
+            # Create artifacts folder if not exists
+            os.makedirs(os.path.dirname(self.ingestion_config.train_data_path), exist_ok=True)
+
+            # Save raw data
+            df.to_csv(self.ingestion_config.raw_data_path, index=False, header=True)
+
+            logging.info('Train-test split initiated')
+            train_set, test_set = train_test_split(df, test_size=0.2, random_state=42)
+
+            # Save train and test datasets
+            train_set.to_csv(self.ingestion_config.train_data_path, index=False, header=True)
+            test_set.to_csv(self.ingestion_config.test_data_path, index=False, header=True)
+
+            logging.info('Data ingestion completed successfully')
 
             return (
                 self.ingestion_config.train_data_path,
                 self.ingestion_config.test_data_path
             )
-        except Exception as e:
-            raise CustomException(e,sys)
 
-if __name__=="__main__":
-    obj=DataIngestion()
-    obj.initiate_data_ingestion()
+        except Exception as e:
+            logging.error(f"Data ingestion failed: {e}")
+            raise CustomException(e, sys)
+
+
+
+if __name__ == "__main__":
+    obj = DataIngestion()
+    train_data,test_data=obj.initiate_data_ingestion()
+
+    data_tranfromation=DataTransformation()
+    data_tranfromation.initiate_data_transformation(train_data,test_data)
+
 
 

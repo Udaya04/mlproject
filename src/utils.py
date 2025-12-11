@@ -14,6 +14,7 @@ def save_object(file_path, obj):
         dir_path = os.path.dirname(file_path)
         os.makedirs(dir_path, exist_ok=True)
 
+        ## Yaha dill.dump() object ko binary form me convert karke file_path file me save karta hai.
         with open(file_path, 'wb') as file_obj:
             dill.dump(obj, file_obj)
 
@@ -50,6 +51,15 @@ def evaluate_models(X_train, y_train, X_test, y_test, models, param=None):
 
     except Exception as e:
         raise CustomException(e, sys)
+    
+def load_object(file_path):
+    try:
+        with open(file_path, 'rb') as file_obj:
+            return dill.load(file_obj)
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
 
 
 

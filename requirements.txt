@@ -6,5 +6,6 @@ seaborn
 catboost
 xgboost
 dill
+flask
 
 #-e .  #jab bhi jo kuch bhi install krna usko commentout krke install krna//

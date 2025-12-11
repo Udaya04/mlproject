@@ -23,14 +23,14 @@ class DataIngestion:
     def initiate_data_ingestion(self):
         logging.info("Entered the data ingestion method/component")
         try:
+            # Load dataset
             df = pd.read_csv(os.path.join('notebook', 'StudentsPerformance.csv'))
             logging.info('Read the dataset as DataFrame')
 
-            #  ADD AVERAGE_SCORE COLUMN HERE 
-            df['Average_Score'] = df[['math score', 'reading score', 'writing score']].mean(axis=1)
-            logging.info('Average_Score column created successfully')
+            # REMOVE Average Score, You are now predicting math score!
+            logging.info("Target column is set as 'math score'")
 
-            # Create artifacts folder if not exists
+            # Create artifacts folder
             os.makedirs(os.path.dirname(self.ingestion_config.train_data_path), exist_ok=True)
 
             # Save raw data
@@ -39,7 +39,7 @@ class DataIngestion:
             logging.info('Train-test split initiated')
             train_set, test_set = train_test_split(df, test_size=0.2, random_state=42)
 
-            # Save train and test datasets
+            # Save train & test data
             train_set.to_csv(self.ingestion_config.train_data_path, index=False, header=True)
             test_set.to_csv(self.ingestion_config.test_data_path, index=False, header=True)
 
@@ -55,17 +55,19 @@ class DataIngestion:
             raise CustomException(e, sys)
 
 
-
 if __name__ == "__main__":
     obj = DataIngestion()
-    train_data,test_data=obj.initiate_data_ingestion()
+    train_data, test_data = obj.initiate_data_ingestion()
 
-    data_tranfromation=DataTransformation()
-    train_arr, test_arr, preprocessor_path = data_tranfromation.initiate_data_transformation(train_data, test_data)
+    data_transformation = DataTransformation()
+    train_arr, test_arr, preprocessor_path = data_transformation.initiate_data_transformation(
+        train_data,
+        test_data
+    )
 
-    modeltrainer=ModelTrainer()
-    print(modeltrainer.initiate_model_training(train_arr,test_arr))
-    
+    modeltrainer = ModelTrainer()
+    print(modeltrainer.initiate_model_training(train_arr, test_arr))
+
 
 
 

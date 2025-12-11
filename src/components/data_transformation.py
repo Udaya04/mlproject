@@ -3,11 +3,10 @@ import os
 from dataclasses import dataclass
 import numpy as np
 import pandas as pd
-import numpy as np
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder,StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from src.exception import CustomException
 from src.logger import logging
 from src.utils import save_object
@@ -23,96 +22,96 @@ class DataTransformation:
         
     def get_datatranformation_object(self):
         """
-        
-        :param self: -This function responsible for Data tranformation
+        Function responsible for Data Transformation
         """
         try:
-
-            numerical_columns=['math score','writing score','reading score']
-            categorical_columns=[
+            numerical_columns = ['writing score', 'reading score']   # math score IS TARGET
+            categorical_columns = [
                 'gender',
                 'race/ethnicity',
                 'parental level of education',
                 'lunch',
                 'test preparation course'
-
             ]
-            num_pipeline=Pipeline(
+
+            num_pipeline = Pipeline(
                 steps=[
-                    ('imputer',SimpleImputer(strategy='median')), # handling the missing values
-                    ('scaler',StandardScaler())
+                    ('imputer', SimpleImputer(strategy='median')),
+                    ('scaler', StandardScaler())
                 ]
             )
-            catgorical_pipeline=Pipeline(
+
+            categorical_pipeline = Pipeline(
                 steps=[
-                    ('imputer',SimpleImputer(strategy='most_frequent')),
-                    ("one_hot_encoder", OneHotEncoder(drop="first")),
-                    ("scaler", StandardScaler(with_mean=False))
+                    ('imputer', SimpleImputer(strategy='most_frequent')),
+                    ('one_hot_encoder', OneHotEncoder(drop='first')),
+                    ('scaler', StandardScaler(with_mean=False))
                 ]
             )
-            logging.info('Categorical Columns Standardscaling completed')
-            logging.info('numerical columns encoding completed')
-            ## Combine both pipelines
-            preprocessor=ColumnTransformer(
+
+            logging.info('Numerical and Categorical pipelines created')
+
+            # Combine pipelines
+            preprocessor = ColumnTransformer(
                 [
-                    ('num_pipeline',num_pipeline,numerical_columns),
-                    ('catogorical_pipeline',catgorical_pipeline,categorical_columns)
+                    ('num_pipeline', num_pipeline, numerical_columns),
+                    ('cat_pipeline', categorical_pipeline, categorical_columns)
                 ]
             )
-            logging.info("preprocessor Pipeline completed")
+
+            logging.info("Preprocessor pipeline completed")
             return preprocessor
 
-        except Exception  as e:
-            raise CustomException(e,sys)
+        except Exception as e:
+            raise CustomException(e, sys)
     
 
-
-    def initiate_data_transformation(self,train_path,test_path):
-
+    def initiate_data_transformation(self, train_path, test_path):
         try:
-            # Read Data
-            train_df=pd.read_csv(train_path)
-            test_df=pd.read_csv(test_path)
+            # Read Train & Test Data
+            train_df = pd.read_csv(train_path)
+            test_df = pd.read_csv(test_path)
 
-            logging.info('Read train and Test data')
+            logging.info("Read train and test data successfully")
 
-            target_column='Average_Score'
+            # Set TARGET to math score
+            target_column = 'math score'
 
-            X_train=train_df.drop(columns=[target_column])
-            y_train=train_df[target_column]
+            X_train = train_df.drop(columns=[target_column])
+            y_train = train_df[target_column]
 
-            X_test=test_df.drop(columns=[target_column])
-            y_test=test_df[target_column]
+            X_test = test_df.drop(columns=[target_column])
+            y_test = test_df[target_column]
 
-            preprocessor_obj=self.get_datatranformation_object()
-            logging.info('Applying Preprocessing On train and test')
+            preprocessor_obj = self.get_datatranformation_object()
 
-            X_train_scaled=preprocessor_obj.fit_transform(X_train)
-            X_test_scaled=preprocessor_obj.transform(X_test)
+            logging.info("Applying preprocessing to train and test data")
 
-            # np.c_ stacks arrays column-wise, meaning it adds columns side by side.
-            train_arr=np.c_[
-                X_train_scaled,np.array(y_train)
-            ]
-            test_arr=np.c_[X_test_scaled,np.array(y_test)]
+            X_train_scaled = preprocessor_obj.fit_transform(X_train)
+            X_test_scaled = preprocessor_obj.transform(X_test)
 
-            ## Save the preprocessor
-            save_object(file_path=self.data_transformation_config.preprocessor_obj_file_path,
-                        obj=preprocessor_obj)
+            # Combine features + target
+            train_arr = np.c_[X_train_scaled, np.array(y_train)]
+            test_arr = np.c_[X_test_scaled, np.array(y_test)]
+
+            # Save preprocessor object
+            save_object(
+                file_path=self.data_transformation_config.preprocessor_obj_file_path,
+                obj=preprocessor_obj
+            )
+
+            logging.info("Data transformation completed")
 
             return (
                 train_arr,
                 test_arr,
                 self.data_transformation_config.preprocessor_obj_file_path
             )
-        
-
-            
-
 
         except Exception as e:
             logging.error(f"Data Transformation failed: {e}")
             raise CustomException(e, sys)
+
 
     
 
